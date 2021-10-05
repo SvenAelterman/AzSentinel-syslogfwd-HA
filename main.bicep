@@ -72,7 +72,7 @@ var osDetails = {
     imageReference: {
       publisher: 'RedHat'
       offer: 'RHEL'
-      sku: ''
+      sku: '8_4'
       version: 'latest'
     }
     configScriptName: 'redhat.sh'

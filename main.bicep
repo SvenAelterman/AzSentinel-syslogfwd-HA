@@ -42,6 +42,7 @@ param vmCount int = 2
 ])
 param os string = 'Ubuntu'
 param vmSize string = 'Standard_D4s_v4'
+param osDiskSize int = 256
 param scriptsLocation string = 'https://raw.githubusercontent.com/SvenAelterman/AzSentinel-syslogfwd-HA/main/scripts/'
 param deploymentTime string = utcNow()
 param deploymentNamePrefix string = 'syslogfwd-HA-'
@@ -137,7 +138,7 @@ module vm 'vm-syslogfwd.bicep' = [for i in range(sequence, vmCount): {
     virtualNetworkName: virtualNetworkName
     virtualNetworkResourceGroup: vnetResourceGroup
     subnetName: vmSubnetName
-    osDiskSize: 128
+    osDiskSize: osDiskSize
     sequence: i
     adminPasswordOrKey: adminPassword
     resourceNameFormat: resourceNameFormat

@@ -21,7 +21,7 @@ param adminPasswordOrKey string
 
 param adminUserName string = 'azureuser'
 param vmSize string = 'Standard_D4s_v4'
-param osDiskSize int = 128
+param osDiskSize int = 256
 param authenticationType string = 'password'
 param osDetail object = {
   // TODO: Copy Ubuntu osDetail values here for default

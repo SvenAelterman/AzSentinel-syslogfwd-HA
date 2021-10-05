@@ -57,9 +57,9 @@ fi
 # Configure CEF Forwarding #
 ############################
 echo "CONFIGURE CEF FORWARDING"
-alias python='python3'
-alias sudo='sudo '
-sudo wget -O cef_installer.py https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/DataConnectors/CEF/cef_installer.py && sudo python cef_installer.py $WORKSPACE_ID $WORKSPACE_KEY
+#alias python='python3'
+#alias sudo='sudo '
+sudo wget -O cef_installer.py https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/DataConnectors/CEF/cef_installer.py && sudo python3 cef_installer.py $WORKSPACE_ID $WORKSPACE_KEY
 sleep 15
 
 ######################
@@ -80,7 +80,7 @@ echo "CONFIGURE HOSTNAME SETTING"
 sudo sed -i -e "/'Severity' => tags[tags.size - 1]/ a \ \t 'Host' => record['host']" -e "s/'Severity' => tags[tags.size - 1]/&,/" /opt/microsoft/omsagent/plugin/filter_syslog_security.rb && sudo /opt/microsoft/omsagent/bin/service_control restart $WORKSPACE_ID
 
 echo "CONFIGURE LOG TIME SETTINGS"
-sudo wget -O TimeGenerated.py https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/DataConnectors/CEF/TimeGenerated.py && yes | python TimeGenerated.py $WORKSPACE_ID
+sudo wget -O TimeGenerated.py https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/DataConnectors/CEF/TimeGenerated.py && yes | python3 TimeGenerated.py $WORKSPACE_ID
 
 ##############################################
 # Re-Enabling and Configuring SELinux Policy #
@@ -99,4 +99,4 @@ echo "WRAPPING UP INSTALLATION"
 ###########################
 # SEND SAMPLE CEF MESSAGE #
 ###########################
-sudo wget -O cef_simulator.py https://raw.githubusercontent.com/OTRF/Blacksmith/master/templates/azure/CEF-Log-Analytics-Agent/scripts/cef_simulator.py && sudo python cef_simulator.py --debug
+sudo wget -O cef_simulator.py https://raw.githubusercontent.com/OTRF/Blacksmith/master/templates/azure/CEF-Log-Analytics-Agent/scripts/cef_simulator.py && sudo python3 cef_simulator.py --debug

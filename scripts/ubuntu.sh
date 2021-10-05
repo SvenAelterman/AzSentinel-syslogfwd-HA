@@ -66,6 +66,7 @@ sleep 15
 # Configure Firewall #
 ######################
 # echo "CONFIGURE LOCAL FIREWALL"
+# sudo firewall-cmd --direct --permanent --add-rule ipv4 filter INPUT 0 -p tcp --dport 25224 -j ACCEPT
 # sudo firewall-cmd --direct --permanent --add-rule ipv4 filter INPUT 0 -p tcp --dport 25226 -j ACCEPT
 # sudo firewall-cmd --permanent --add-port=514/tcp
 # sudo firewall-cmd --permanent --add-port=514/udp

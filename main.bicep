@@ -42,19 +42,19 @@ param vmSize string = 'Standard_D4s_v4'
 param scriptsLocation string = 'https://raw.githubusercontent.com/SvenAelterman/AzSentinel-syslogfwd-HA/main/scripts/'
 param deploymentTime string = utcNow()
 param deploymentNamePrefix string = 'syslogfwd-HA-'
+// Default naming convention from the Microsoft Cloud Adoption Framework
+// See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
+// {0} is a placeholder for the resource type abbreviation (e.g., "lbi")
+// See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations 
+param resourceNameFormat string = '{0}-syslogfwd-${environment}-${location}-{1}'
 
 ////////////////////////////////////////////////////////////////////////////////
 // VARIABLES
 ////////////////////////////////////////////////////////////////////////////////
 
 var sequenceFormatted = format('{0:00}', sequence)
-// Default naming convention from the Microsoft Cloud Adoption Framework
-// See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
-// {0} is a placeholder for the resource type abbreviation (e.g., "lbi")
-// See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations 
-var resourceNameFormat = '{0}-syslogfwd-${environment}-${location}-{1}'
 
-var osDetail = {
+var osDetails = {
   Ubuntu: {
     imageReference: {
       publisher: 'canonical'
@@ -106,7 +106,7 @@ module loadBalancerInternal 'lbi.bicep' = if (vmCount > 1) {
   scope: targetResourceGroup
   params: {
     location: location
-    subnetName: lbSubnetName
+    subnetName: empty(lbSubnetName) ? vmSubnetName : lbSubnetName
     resourceNameFormat: resourceNameFormat
     sequence: sequence
     virtualNetworkName: virtualNetworkName
@@ -129,7 +129,7 @@ module vm 'vm-syslogfwd.bicep' = [for i in range(sequence, vmCount): {
   name: '${deploymentNamePrefix}vm-${i}-${deploymentTime}'
   scope: targetResourceGroup
   params: {
-    osDetail: osDetail[os]
+    osDetail: osDetails[os]
     virtualNetworkName: virtualNetworkName
     virtualNetworkResourceGroup: vnetResourceGroup
     subnetName: vmSubnetName

@@ -24,7 +24,13 @@ param vmSize string = 'Standard_D4s_v4'
 param osDiskSize int = 256
 param authenticationType string = 'password'
 param osDetail object = {
-  // TODO: Copy Ubuntu osDetail values here for default
+  imageReference: {
+    publisher: 'canonical'
+    offer: '0001-com-ubuntu-server-focal'
+    sku: '20_04-lts'
+    version: 'latest'
+  }
+  configScriptName: 'ubuntu.sh'
 }
 
 param resourceNameFormat string = '{0}-syslogfwd-{1}'

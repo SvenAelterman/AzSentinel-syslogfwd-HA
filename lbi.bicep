@@ -1,22 +1,40 @@
 // Deploys the Internal Standard Load Balancer
 
+////////////////////////////////////////////////////////////////////////////////
+// Required parameters
+////////////////////////////////////////////////////////////////////////////////
 param location string
-//param backendIpAddresses array
 
+@description('Name of the Azure virtual network where the load balancer needs to be deployed.')
 param virtualNetworkName string
+@description('Name of the resource group where the virtual network is created.')
 param virtualNetworkResourceGroup string
+@description('Name of the subnet in the virtual network where the load balancer needs to be deployed.')
 param subnetName string
 
+////////////////////////////////////////////////////////////////////////////////
+// Parameters with acceptable defaults
+////////////////////////////////////////////////////////////////////////////////
+@description('Format string of the resource names.')
 param resourceNameFormat string = '{0}-syslogfwd-{1}'
+
 @description('A value to indicate the deployment number.')
 @minValue(0)
 @maxValue(99)
 param sequence int = 1
 
+////////////////////////////////////////////////////////////////////////////////
+// VARIABLES
+////////////////////////////////////////////////////////////////////////////////
+
 var sequenceFormatted = format('{0:00}', sequence)
 var lbName = format(resourceNameFormat, 'lbi', sequenceFormatted)
 var frontendName = 'syslog-internal-frontend'
 var backendName = 'syslogfwd-backend'
+
+////////////////////////////////////////////////////////////////////////////////
+// RESOURCES
+////////////////////////////////////////////////////////////////////////////////
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: virtualNetworkName
@@ -89,6 +107,10 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2021-02-01' = {
     ]
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// OUTPUTS
+////////////////////////////////////////////////////////////////////////////////
 
 output backendAddressPoolId string = loadBalancer.properties.backendAddressPools[0].id
 output frontendIP string = loadBalancer.properties.frontendIPConfigurations[0].properties.privateIPAddress

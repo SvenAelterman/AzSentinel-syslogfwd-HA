@@ -1,15 +1,21 @@
 targetScope = 'subscription'
 
+////////////////////////////////////////////////////////////////////////////////
 // Required parameters
+////////////////////////////////////////////////////////////////////////////////
 param location string
+
+@description('Name of the Azure virtual network where the load balancer and virtual machines needs to be deployed.')
 param virtualNetworkName string
+
 @description('Name of the virtual network subnet where the load balancers should be created. If not specified, will use the same subnet as the virtual machines.')
 param lbSubnetName string = ''
+
 @description('Name of the virtual network subnet where the virtual machines should be created.')
 param vmSubnetName string
 
 @description('The name of the Resource Group containing the Virtual Network.')
-param vnetResourceGroup string
+param virtualNetworkResourceGroup string
 
 @description('Name of the Resource Group where the existing Log Analyics/Sentinel workspace resides.')
 param workspaceResourceGroup string
@@ -50,6 +56,7 @@ param deploymentNamePrefix string = 'syslogfwd-HA-'
 // See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
 // {0} is a placeholder for the resource type abbreviation (e.g., "lbi")
 // See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations 
+@description('Format string of the resource names.')
 param resourceNameFormat string = '{0}-syslogfwd-${environment}-${location}-{1}'
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +96,7 @@ var workspaceKey = listKeys(logAnalytics.id, '2015-11-01-preview').primaryShared
 // For verification that it exists only
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: virtualNetworkName
-  scope: resourceGroup(vnetResourceGroup)
+  scope: resourceGroup(virtualNetworkResourceGroup)
 }
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' existing = {
@@ -114,13 +121,23 @@ module loadBalancerInternal 'lbi.bicep' = if (vmCount > 1) {
     resourceNameFormat: resourceNameFormat
     sequence: sequence
     virtualNetworkName: virtualNetworkName
-    virtualNetworkResourceGroup: vnetResourceGroup
+    virtualNetworkResourceGroup: virtualNetworkResourceGroup
   }
 }
 
 // Create an external load balancer if more than 1 VM is to be created
 module loadBalancerExternal 'lbe.bicep' = if (vmCount > 1) {
   name: '${deploymentNamePrefix}lbe-${deploymentTime}'
+  scope: targetResourceGroup
+  params: {
+    location: location
+    resourceNameFormat: resourceNameFormat
+    sequence: sequence
+  }
+}
+
+module availabilitySet 'avail.bicep' = {
+  name: '${deploymentNamePrefix}avail-${deploymentTime}'
   scope: targetResourceGroup
   params: {
     location: location
@@ -136,7 +153,7 @@ module vm 'vm-syslogfwd.bicep' = [for i in range(sequence, vmCount): {
   params: {
     osDetail: osDetails[os]
     virtualNetworkName: virtualNetworkName
-    virtualNetworkResourceGroup: vnetResourceGroup
+    virtualNetworkResourceGroup: virtualNetworkResourceGroup
     subnetName: vmSubnetName
     osDiskSize: osDiskSize
     sequence: i
@@ -149,6 +166,7 @@ module vm 'vm-syslogfwd.bicep' = [for i in range(sequence, vmCount): {
     scriptsLocation: scriptsLocation
     lbiBackendAddressPoolId: vmCount > 1 ? loadBalancerInternal.outputs.backendAddressPoolId : ''
     lbeBackendAddressPoolId: vmCount > 1 ? loadBalancerExternal.outputs.backendAddressPoolId : ''
+    avsetId: availabilitySet.outputs.avsetId
   }
 }]
 

@@ -1,28 +1,51 @@
 // Builds the pair of Linux VMs with the selected OS
 
+////////////////////////////////////////////////////////////////////////////////
+// Required parameters
+////////////////////////////////////////////////////////////////////////////////
+param location string
+
+@description('Name of the Azure virtual network where the virtual machines needs to be deployed.')
+param virtualNetworkName string
+
+@description('The name of the Resource Group containing the Virtual Network.')
+param virtualNetworkResourceGroup string
+
+@description('Name of the virtual network subnet where the virtual machines should be created.')
+param subnetName string
+
+@description('The Azure resource ID of the backend pool of the internal load balancer.')
+param lbiBackendAddressPoolId string
+
+@description('The Azure resource ID of the backend pool of the external load balancer.')
+param lbeBackendAddressPoolId string
+
+@description('The GUID of the workspace where the syslog forwarders will forward to.')
+param workspaceId string
+
+@description('An access key for the log analytics workspace.')
+@secure()
+param workspaceKey string
+
+@description('The password for the local user account.')
+@secure()
+param adminPasswordOrKey string
+
+param avsetId string = ''
+
+////////////////////////////////////////////////////////////////////////////////
+// Parameters with acceptable defaults
+////////////////////////////////////////////////////////////////////////////////
 @description('A value to indicate the deployment number.')
 @minValue(0)
 @maxValue(99)
 param sequence int = 1
-param location string
-
-param virtualNetworkName string
-param virtualNetworkResourceGroup string
-param subnetName string
-param lbiBackendAddressPoolId string
-param lbeBackendAddressPoolId string
-
-param workspaceId string
-@secure()
-param workspaceKey string
-
-@secure()
-param adminPasswordOrKey string
 
 param adminUserName string = 'azureuser'
 param vmSize string = 'Standard_D4s_v4'
 param osDiskSize int = 256
 param authenticationType string = 'password'
+@description('The image reference and name of the OS configuration script.')
 param osDetail object = {
   imageReference: {
     publisher: 'canonical'
@@ -33,9 +56,15 @@ param osDetail object = {
   configScriptName: 'ubuntu.sh'
 }
 
+@description('Format string of the resource names.')
 param resourceNameFormat string = '{0}-syslogfwd-{1}'
+@description('The URL of the configuration scripts.')
 param scriptsLocation string
 param scriptsLocationAccessToken string = ''
+
+////////////////////////////////////////////////////////////////////////////////
+// VARIABLES
+////////////////////////////////////////////////////////////////////////////////
 
 // The Linux SSH configuration, which is used if authenticationType == ssh
 var linuxSshConfiguration = {
@@ -53,6 +82,10 @@ var linuxSshConfiguration = {
 var sequenceFormatted = format('{0:00}', sequence)
 var setUpCEFScript = uri('${scriptsLocation}${osDetail.configScriptName}', '${scriptsLocationAccessToken}')
 
+////////////////////////////////////////////////////////////////////////////////
+// RESOURCES
+////////////////////////////////////////////////////////////////////////////////
+
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: virtualNetworkName
   scope: resourceGroup(virtualNetworkResourceGroup)
@@ -63,9 +96,8 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing 
   scope: resourceGroup(virtualNetworkResourceGroup)
 }
 
-// LATER: Availability set
-
-// Create a NIC for the new VM, attached to the existing subnet
+// Create a NIC for the new VM, attached to the existing subnet,
+// and optionally associated with the backend pool of the internal and external load balancers
 resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: format(resourceNameFormat, 'nic', sequenceFormatted)
   location: location
@@ -98,6 +130,10 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
   name: format(resourceNameFormat, 'vm', sequenceFormatted)
   location: location
   properties: {
+    // Associate the VM with an availability set, if specified
+    availabilitySet: empty(avsetId) ? json('null') : {
+      id: avsetId
+    }
     hardwareProfile: {
       vmSize: vmSize
     }
@@ -149,6 +185,10 @@ resource configScript 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' 
     }
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// OUTPUTS
+////////////////////////////////////////////////////////////////////////////////
 
 output scriptUrlUsed string = setUpCEFScript
 output vmIP string = nic.properties.ipConfigurations[0].properties.privateIPAddress

@@ -17,6 +17,9 @@ param workspaceResourceGroup string
 @description('Name of the existing Log Analytics/Sentinel workspace.')
 param workspaceName string
 
+@secure()
+param adminPassword string
+
 ////////////////////////////////////////////////////////////////////////////////
 // Parameters with acceptable defaults
 ////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +103,7 @@ resource targetResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// TODO: Output IPs
+// Create an internal load balancer if more than 1 VM is to be created
 module loadBalancerInternal 'lbi.bicep' = if (vmCount > 1) {
   name: '${deploymentNamePrefix}lbi-${deploymentTime}'
   scope: targetResourceGroup
@@ -114,6 +117,7 @@ module loadBalancerInternal 'lbi.bicep' = if (vmCount > 1) {
   }
 }
 
+// Create an external load balancer if more than 1 VM is to be created
 module loadBalancerExternal 'lbe.bicep' = if (vmCount > 1) {
   name: '${deploymentNamePrefix}lbe-${deploymentTime}'
   scope: targetResourceGroup
@@ -135,7 +139,7 @@ module vm 'vm-syslogfwd.bicep' = [for i in range(sequence, vmCount): {
     subnetName: vmSubnetName
     osDiskSize: 128
     sequence: i
-    adminPasswordOrKey: 'Abcd1234'
+    adminPasswordOrKey: adminPassword
     resourceNameFormat: resourceNameFormat
     location: location
     vmSize: vmSize

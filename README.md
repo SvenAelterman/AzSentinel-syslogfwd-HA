@@ -26,6 +26,7 @@ The following parameters must be specified:
 - vmSubnetName
 - workspaceResourceGroup
 - workspaceName
+- adminPassword
 
 The following parameters have default values that you can override if desired:
 

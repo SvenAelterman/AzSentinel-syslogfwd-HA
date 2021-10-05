@@ -2,6 +2,8 @@
 [string]$Location = "eastus"
 [string]$Environment = "test"
 
+[securestring]$VmPassword = (Get-Credential -UserName 'azureuser').Password
+
 $TemplateParameters = @{
 	location               = $Location
 	environment            = $Environment
@@ -14,6 +16,7 @@ $TemplateParameters = @{
 	workspaceName          = 'sentinel-ip2geo-demo-eastus-01'
 	sequence               = 5
 	vmCount                = 2
+	adminPassword          = $VmPassword
 	tags                   = @{
 		'date-created' = (Get-Date -Format 'yyyy-MM-dd')
 		purpose        = $Environment

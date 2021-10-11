@@ -1,4 +1,6 @@
 # PowerShell script to deploy the template with generic parameter values
+# Runs on PowerShell 7
+
 [string]$Location = "eastus"
 [string]$Environment = "test"
 

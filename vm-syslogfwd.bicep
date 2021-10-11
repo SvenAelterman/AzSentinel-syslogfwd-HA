@@ -107,6 +107,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: format(resourceNameFormat, 'nic', sequenceFormatted)
   location: location
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'

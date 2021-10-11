@@ -44,6 +44,11 @@ param sequence int = 1
 param adminUserName string = 'azureuser'
 param vmSize string = 'Standard_D4s_v4'
 param osDiskSize int = 256
+
+@allowed([
+  'ssh'
+  'password'
+])
 param authenticationType string = 'password'
 @description('The image reference and name of the OS configuration script.')
 param osDetail object = {

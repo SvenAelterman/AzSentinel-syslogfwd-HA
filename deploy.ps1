@@ -2,7 +2,7 @@
 [string]$Location = "eastus"
 [string]$Environment = "test"
 
-[securestring]$VmPassword = (Get-Credential -UserName 'azureuser').Password
+[securestring]$VmPassword = (Get-Credential -UserName 'azureuser' -Message "Enter the password for the local VM user account.").Password
 
 $TemplateParameters = @{
 	location                    = $Location
@@ -17,7 +17,10 @@ $TemplateParameters = @{
 	sequence                    = 2
 	vmCount                     = 3
 	os                          = 'RHEL'
+	# If using 'ssh', send the public key in base64 format instead
 	adminPassword               = $VmPassword
+	# Choose between 'password' or 'ssh'
+	authenticationType          = 'password'
 	tags                        = @{
 		'date-created' = (Get-Date -Format 'yyyy-MM-dd')
 		purpose        = $Environment

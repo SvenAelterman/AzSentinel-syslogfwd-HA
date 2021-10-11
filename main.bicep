@@ -55,9 +55,12 @@ param deploymentNamePrefix string = 'syslogfwd-HA-'
 // Default naming convention from the Microsoft Cloud Adoption Framework
 // See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
 // {0} is a placeholder for the resource type abbreviation (e.g., "lbi")
+// {1} is a placeholder for the sequence (e.gl, "01" or "02")
 // See https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations 
 @description('Format string of the resource names.')
 param resourceNameFormat string = '{0}-syslogfwd-${environment}-${location}-{1}'
+
+param authenticationType string = 'password'
 
 ////////////////////////////////////////////////////////////////////////////////
 // VARIABLES
@@ -136,6 +139,7 @@ module loadBalancerExternal 'lbe.bicep' = if (vmCount > 1) {
   }
 }
 
+// Deploy an availability set and proximity placement group
 module availabilitySet 'avail.bicep' = {
   name: '${deploymentNamePrefix}avail-${deploymentTime}'
   scope: targetResourceGroup
@@ -167,6 +171,7 @@ module vm 'vm-syslogfwd.bicep' = [for i in range(sequence, vmCount): {
     lbiBackendAddressPoolId: vmCount > 1 ? loadBalancerInternal.outputs.backendAddressPoolId : ''
     lbeBackendAddressPoolId: vmCount > 1 ? loadBalancerExternal.outputs.backendAddressPoolId : ''
     avsetId: availabilitySet.outputs.avsetId
+    authenticationType: authenticationType
   }
 }]
 
